@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Radio Admin Page</title>
+
+<link rel="stylesheet" type="text/css" href="static/stylesheet.css"
+	media="screen" />
+<script
+	src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+<script src="webjars/jquery/1.9.1/jquery.min.js"></script>
+<script src="webjars/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+<link rel="stylesheet"
+	href="/webjars/bootstrap/4.1.3/css/bootstrap.min.css" />
+<script type="text/javascript">
+	var app = angular.module("customerManagement", []);
+	//angular.module('customerManagement', ['ui.bootstrap']);
+	angular.module('customerManagement').constant('SERVER_URL',
+			'http://localhost:8080/api/radio');
+
+	//Controller Part
+	app.controller("customerManagementController", function($scope, $http,
+			SERVER_URL) {
+		//Initialize page with default data which is blank in this example
+		//$http.get('http://localhost:8080/api/radio/user')
+		$scope.customers = [];
+		$scope.form = {
+			id : -1,
+			radioUrl : "",
+			imageUrl : "",
+			name : "",
+			tag : ""
+		};
+		//Now load the data from server
+		_refreshPageData();
+		//HTTP POST/PUT methods for add/edit customers
+		$scope.update = function() {
+			var method = "";
+			var url = "";
+			var data = {};
+			if ($scope.form.id == -1) {
+				//Id is absent so add customers - POST operation
+				method = "POST";
+				url = SERVER_URL + '/' + 'admin';
+				data.radioUrl = $scope.form.radioUrl;
+				data.imageUrl = $scope.form.imageUrl;
+				data.name = $scope.form.name;
+				data.tag = $scope.form.tag;
+			} else {
+				//If Id is present, it's edit operation - PUT operation
+				method = "PUT";
+				url = SERVER_URL + '/admin/' + $scope.form.id;
+
+				data.id = $scope.form.id;
+				data.radioUrl = $scope.form.radioUrl;
+				data.imageUrl = $scope.form.imageUrl;
+				data.name = $scope.form.name;
+				data.tag = $scope.form.tag;
+				 
+			}
+			$http({
+				method : method,
+				url : url,
+				data : angular.toJson(data),
+				headers : {
+					'Content-Type' : 'application/json'
+				}
+			}).then(_success, _error);
+		};
+		//HTTP DELETE- delete customer by id
+		$scope.remove = function(customer) {
+
+			$http({
+				method : 'DELETE',
+				url : SERVER_URL + '/admin/' + customer.id
+			}).then(_success, _error);
+		};
+		//In case of edit customers, populate form with customer data
+		$scope.edit = function(customer) {
+			$scope.form.id = customer.id;
+			$scope.form.radioUrl = customer.radioUrl;
+			$scope.form.imageUrl = customer.imageUrl;
+			$scope.form.name = customer.name;
+			$scope.form.tag = customer.tag;
+		};
+		/* Private Methods */
+		//HTTP GET- get all customers collection
+		function _refreshPageData() {
+			$http({
+				method : 'GET',
+				url : SERVER_URL + '/' + 'user'
+			}).then(function successCallback(response) {
+				$scope.customers = response.data;
+			}, function errorCallback(response) {
+				console.log(response.statusText);
+			});
+		}
+		function _success(response) {
+			_refreshPageData();
+			_clearForm()
+		}
+		function _error(response) {
+			alert(response.data.message || response.statusText);
+		}
+		//Clear the form
+		function _clearForm() {
+			$scope.form.radioUrl = "";
+			$scope.form.imageUrl = "";
+			$scope.form.name = "";
+			$scope.form.tag = "";
+			$scope.form.id = -1;
+		}
+	});
+</script>
+ 
+</head>
+ 
+<body ng-app="customerManagement"
+	ng-controller="customerManagementController">
+
+	<table class="table table-striped">
+		<h3>Radio Admin Page</h3>
+		 
+		<form ng-submit="update()">
+			<div class="divTableRow">
+				<div class="divTableCell">Radio Url:</div>
+				<div class="divTableCell">
+					<input type="text" placeholder="radioUrl" ng-model="form.radioUrl"
+						size="60" />
+				</div>
+			</div>
+			<div class="divTableRow">
+				<div class="divTableCell">Image Url:</div>
+				<div class="divTableCell">
+					<input type="text" placeholder="imageUrl" ng-model="form.imageUrl"
+						size="60" />
+				</div>
+			</div>
+			<div class="divTableRow">
+				<div class="divTableCell">name:</div>
+				<div class="divTableCell">
+					<input type="text" placeholder="name" ng-model="form.name"
+						size="60" />
+				</div>
+			</div>
+			<div class="divTableRow">
+				<div class="divTableCell">tag:</div>
+				<div class="divTableCell">
+					<input type="text" placeholder="tag" ng-model="form.tag" size="60" />
+				</div>
+			</div>
+
+			<input type="submit" value="Save" />
+		</form>
+		<!-- <div class="table table-dark">
+			<div class="divTableHeading">
+				<div class="divTableHead">radioUrl</div>
+				<div class="divTableHead">imageUrl</div>
+				<div class="divTableHead">name</div>
+				<div class="divTableHead">tag</div>
+			</div>
+			<div class="divTableRow" ng-repeat="radio_List in customers">
+				<div class="divTableCell">{{ radio_List.radioUrl }}</div>
+				<div class="divTableCell">{{ radio_List.imageUrl }}</div>
+				<div class="divTableCell">{{ radio_List.name }}</div>
+				<div class="divTableCell">{{ radio_List.tag }}</div>
+				<div class="divTableCell">
+					<a ng-click="edit( radio_List )" class="btn btn-primary">Edit</a> <a
+						ng-click="remove( radio_List )" class="btn btn-primary">Remove</a>
+				</div>
+			</div>
+		</div> -->
+
+		</div>
+		<div ng-controller="customerManagementController">
+			<table class="table table-bordered table-striped table-hover">
+				<thead>
+					<tr>
+						<th>radioUrl</th>
+						<th>imageUrl</th>
+						<th>name</th>
+						<th>tag</th>
+					    <th>action</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="radio_List in customers">
+				 
+						<td>{{radio_List.radioUrl}}</td>
+						<td>{{radio_List.imageUrl}}</td>
+						<td>{{radio_List.name}}</td>
+						<td>{{radio_List.tag}}</td>
+						<td><a ng-click="edit( radio_List )" class="btn btn-primary">Edit</a> <a
+						ng-click="remove( radio_List )" class="btn btn-primary">Remove</a></td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+			 
+		 
+	 
+</body>
+</html>
